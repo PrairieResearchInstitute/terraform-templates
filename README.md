@@ -251,4 +251,4 @@ terraform-templates/
 
 ## License
 
-[Apache 2.0](LICENSE).
+[BSD 3-Clause License](LICENSE).
