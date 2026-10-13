@@ -94,7 +94,8 @@ export AWS_SECRET_ACCESS_KEY="<secret-key>"
 CI is a robot. Give it its **own** OpenStack application credential, not yours — you can then revoke it
 without touching anyone's access, and the audit log shows who did what.
 
-1. In Horizon: *Identity → Application Credentials → Create*. Name it `terraform-ci`, set an **expiry
+1. In Horizon: *Identity → Application Credentials → Create* (every field is explained in
+   [`bootstrap/README.md`](../bootstrap/README.md#2-create-an-application-credential)). Name it `terraform-ci`, set an **expiry
    date**, leave *unrestricted* **off**.
 2. Download its `clouds.yaml`. It should look like this, and **the entry name must equal `os_cloud` in the
    `terraform.tfvars` files** (`my-cloud`):
@@ -103,9 +104,10 @@ without touching anyone's access, and the audit log shows who did what.
 clouds:
   my-cloud:
     auth_type: v3applicationcredential
-    auth_url: https://<your-openstack-keystone-endpoint>/v3
-    application_credential_id: "<id>"
-    application_credential_secret: "<secret>"
+    auth:
+      auth_url: https://<your-openstack-keystone-endpoint>/v3
+      application_credential_id: "<id>"
+      application_credential_secret: "<secret>"
     region_name: "<region>"
     interface: public
     identity_api_version: 3
@@ -158,7 +160,7 @@ contains the Mac's checksums, and CI runs Linux. Add all platforms you use:
 
 ```bash
 for dir in network storage vm-a vm-b vm-c; do
-  (cd $dir && terraform providers lock \
+  (cd $dir && terraform init -backend=false -input=false >/dev/null && terraform providers lock \
      -platform=linux_amd64 -platform=linux_arm64 \
      -platform=darwin_arm64 -platform=darwin_amd64 -platform=windows_amd64)
 done

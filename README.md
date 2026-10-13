@@ -104,6 +104,10 @@ contains the step-by-step instructions *and* the table of decisions.
    "how"           "don't repeat yourself"         "don't lose what matters"      "don't do it alone, don't do it unreviewed"
 ```
 
+**Before the first one:** the VMs boot from an Ubuntu image that must exist in your OpenStack project.
+[`bootstrap/`](bootstrap/README.md) shows how to create your credential, set up `clouds.yaml`, and upload
+that image — or a **newer Linux release** whenever you want one.
+
 ### Which one do I need?
 
 * Learning, or a single throwaway VM → **1**.
@@ -196,6 +200,9 @@ export OS_CLOUD=my-cloud          # the entry name inside your clouds.yaml
 openstack image list              # a table of images = your credentials work
 ```
 
+The [`bootstrap/`](bootstrap/README.md) folder walks through this step by step (including every field of
+the credential form) and then uploads the Linux image the VMs boot from.
+
 ---
 
 ## How to use this repository
@@ -243,6 +250,7 @@ openstack image list              # a table of images = your credentials work
 ```
 terraform-templates/
 ├── README.md                          ← you are here
+├── bootstrap/                         step 0: credential, clouds.yaml, upload a Linux image
 ├── 01-single-vm/                      one VM, local state
 ├── 02-multi-vm-modules/               three VMs, shared module
 ├── 03-persistent-network-storage/     IPs and data outlive VMs

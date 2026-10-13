@@ -43,7 +43,8 @@ Terraform and the OpenStack CLI both read your credentials from a file called **
 3. `/etc/openstack/clouds.yaml`
 
 To get one, create an **application credential** in the web dashboard (Horizon):
-*Identity → Application Credentials → Create*, then download the `clouds.yaml` it offers. An application
+*Identity → Application Credentials → Create*, then download the `clouds.yaml` it offers.
+(Step-by-step with every form field: [`bootstrap/README.md`](../bootstrap/README.md#2-create-an-application-credential).) An application
 credential is better than your personal password: it can be revoked on its own and it never expires
 your real login. It looks like this:
 
@@ -93,15 +94,16 @@ The VM boots from an image named **`Ubuntu 24.04`**. Check it exists:
 openstack image list | grep "Ubuntu 24.04"
 ```
 
-If it is missing, upload it once (about 600 MB download):
+If it is missing, upload it once (about 600 MB download), using the script in the repository's
+[`bootstrap/`](../bootstrap/README.md) folder, which also explains how to add a **newer** Ubuntu:
 
 ```bash
-./bootstrap/upload_ubuntu_2404.sh my-cloud --cleanup
+../bootstrap/upload_ubuntu_image.sh my-cloud
 ```
 
-> ⚠️ That script **deletes and re-creates** the image. The new image has a new ID, which makes Terraform
-> want to *replace* VMs that use it. Run it once per project, not routinely. Use case 3 shows how to
-> make that safe.
+> The script leaves an existing image alone unless you pass `--replace`. Replacing gives the image a new
+> ID, which makes Terraform want to *replace* VMs that use it, so run it once per project, not routinely.
+> Use case 3 shows how to make that safe.
 
 ---
 
@@ -115,7 +117,6 @@ If it is missing, upload it once (about 600 MB download):
 | `outputs.tf` | What gets printed after `apply` (VM ID, public IP, SSH command). |
 | `cloud-init.yaml` | Script the VM runs on first boot (installs Docker, git, …). |
 | `terraform.tfvars.example` | Template for **your** values. Copy it to `terraform.tfvars`. |
-| `bootstrap/upload_ubuntu_2404.sh` | One-off helper that uploads the base image (step 1.4). |
 | `.gitignore` | Keeps state, credentials and your real values out of Git. |
 
 Terraform reads **every** `*.tf` file in the folder as one configuration. The split into several
