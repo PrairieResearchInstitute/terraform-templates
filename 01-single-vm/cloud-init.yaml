@@ -1,0 +1,34 @@
+#cloud-config
+# cloud-init.yaml -- runs ONCE, as root, the first time the VM boots.
+#
+# The first line MUST be exactly "#cloud-config" (cloud-init uses it to
+# recognise the format). Check how it went, after logging in, with:
+#   cloud-init status --wait
+#   sudo cat /var/log/cloud-init-output.log        # full output of every command
+
+# Refresh the apt package index before installing anything. Cloud images ship
+# with a stale index.
+package_update: true
+
+# Plain packages from Ubuntu's own repositories.
+packages:
+  - git
+  - ca-certificates
+  - curl
+  - gnupg
+  - jq
+
+# Commands run in order, as root, AFTER the packages above are installed.
+runcmd:
+  # Install Docker from Docker's official apt repository (versioned and
+  # maintained) instead of the older distro package or a `curl | sh` script.
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+  - |
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+  - apt-get update -y
+  - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - systemctl enable --now docker
+  # Let the default user run `docker` without sudo (takes effect at next login).
+  - usermod -aG docker ubuntu

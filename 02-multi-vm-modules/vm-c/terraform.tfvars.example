@@ -1,0 +1,22 @@
+# vm-c/terraform.tfvars.example -- copy to terraform.tfvars (gitignored).
+# Do the same in vm-b/ and vm-c/ (see README). The values are the same in all
+# three directories except, if you want, flavor_name.
+#
+# Find every value with the OpenStack CLI:  export OS_CLOUD=my-cloud
+
+os_cloud = "my-cloud"
+
+# openstack flavor list     (example from Radiant: gp.xlarge)
+flavor_name = "<flavor-name>"
+
+# openstack keypair list
+key_pair = "<your-keypair-name>"
+
+# openstack network list
+network_name = "<your-project-network>"
+
+# openstack network list --external
+external_network_name = "ext-net"
+
+# openstack security group list   (one of them must allow SSH)
+security_groups = ["default", "<your-ssh-security-group>"]

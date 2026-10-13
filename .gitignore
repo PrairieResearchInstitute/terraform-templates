@@ -11,6 +11,17 @@
 *.sln.docstates
 *.env
 
+# Root-level ignore for the repository as a whole. Each use case also has its own.
+.terraform/
+*.tfstate
+*.tfstate.*
+clouds.yaml
+secure.yaml
+*.pem
+*.key
+.env
+.DS_Store
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

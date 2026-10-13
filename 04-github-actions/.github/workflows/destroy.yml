@@ -1,0 +1,64 @@
+# .github/workflows/destroy.yml -- destroys ONE VM, on demand, from the Actions tab.
+#
+# Run it from: Actions > Terraform Destroy > Run workflow.
+#
+# network/ and storage/ are NOT in the list of choices, on purpose. They hold the
+# public IPs and the data. Removing them is a deliberate, reviewed code change
+# (see use case 3, "Tear everything down"), never a button.
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      directory:
+        description: 'VM folder to destroy (its IP and data are kept)'
+        required: true
+        type: choice
+        options: [vm-a, vm-b, vm-c]
+      confirm:
+        description: 'Type the folder name again to confirm'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    # Only allow it from main, so a half-finished branch cannot destroy things.
+    if: github.ref == 'refs/heads/main'
+    # OPTIONAL second gate: see apply.yml. Strongly recommended for destroy.
+    # environment: production
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ENDPOINT_URL: ${{ secrets.AWS_ENDPOINT_URL }}
+    steps:
+      - name: Check the confirmation
+        env:
+          # Inputs go through environment variables, never straight into the script:
+          # `confirm` is free text, and text pasted into a script is code.
+          DIRECTORY: ${{ inputs.directory }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$DIRECTORY" != "$CONFIRM" ]; then
+            echo "::error::Confirmation does not match the folder '$DIRECTORY'. Aborting."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: ./.github/actions/terraform-setup
+        with:
+          directory: ${{ inputs.directory }}
+          clouds-yaml: ${{ secrets.OS_CLOUDS_YAML }}
+          bucket-name: ${{ secrets.BUCKET_NAME }}
+
+      # Removes the instance and the volume ATTACHMENT only. The floating IP, port and
+      # volume belong to other states, so they are untouched. Bring the VM back by
+      # re-running apply (push a trivial change, or run `terraform apply` locally).
+      - name: Terraform destroy
+        working-directory: ${{ inputs.directory }}
+        run: terraform destroy -auto-approve -input=false

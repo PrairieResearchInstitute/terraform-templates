@@ -1,0 +1,24 @@
+# --- Terraform working files and STATE --------------------------------------
+# State files record every attribute of every resource and can contain secrets.
+# They must never be committed.
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+*_override.tf
+
+# --- Your real values and credentials ---------------------------------------
+terraform.tfvars
+*.auto.tfvars
+# Real team members' names, ids and keys. Public keys are not secret, but the file
+# identifies real people; keep it out of a public repository.
+users.yaml
+clouds.yaml
+secure.yaml
+*.pem
+*.key
+
+# --- OS noise ----------------------------------------------------------------
+.DS_Store

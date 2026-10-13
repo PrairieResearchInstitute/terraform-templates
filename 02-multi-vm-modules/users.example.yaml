@@ -1,0 +1,26 @@
+# users.example.yaml -- copy to users.yaml and describe YOUR team.
+#   cp users.example.yaml users.yaml
+#
+# One shared list, applied to EVERY VM at first boot by cloud-init.
+# Only PUBLIC keys go here -- never a private key.
+#
+# Fields:
+#   name                  login name (lowercase letters, digits, - and _)
+#   sudo                  true => passwordless sudo (default: false)
+#   groups                extra Linux groups (default: none)
+#   ssh_authorized_keys   public keys allowed to log in as this user
+#
+# Get your public key with:  cat ~/.ssh/id_ed25519.pub
+
+users:
+  - name: alice
+    sudo: true
+    ssh_authorized_keys:
+      - "ssh-ed25519 AAAA...replace-with-alices-real-public-key... alice@example.org"
+
+  - name: bob
+    sudo: false
+    ssh_authorized_keys:
+      - "ssh-ed25519 AAAA...replace-with-bobs-real-public-key... bob@example.org"
+      # A user can have several keys (laptop + desktop):
+      # - "ssh-rsa AAAA... bob@desktop"

@@ -1,0 +1,22 @@
+# --- Terraform working files and STATE --------------------------------------
+# State files record every attribute of every resource and can contain secrets.
+# They must never be committed.
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+*_override.tf
+
+# --- Your real values and credentials ---------------------------------------
+# terraform.tfvars holds YOUR project's names; clouds.yaml holds a credential.
+terraform.tfvars
+*.auto.tfvars
+clouds.yaml
+secure.yaml
+*.pem
+*.key
+
+# --- OS noise ----------------------------------------------------------------
+.DS_Store

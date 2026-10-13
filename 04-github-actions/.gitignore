@@ -1,0 +1,30 @@
+# --- Terraform working files and STATE --------------------------------------
+# State lives in the remote bucket, but a local copy can still appear (for example
+# after a failed `init`). State files can contain secrets: never commit them.
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+*_override.tf
+
+# NOTE: .terraform.lock.hcl is COMMITTED in this use case. It pins the exact provider
+# build every developer and the CI runner use (see the README).
+
+# NOTE: terraform.tfvars and users.yaml are COMMITTED in this use case (GitHub
+# Actions reads them). That is only safe because they hold NO secrets -- keep it so.
+# Anything personal or secret goes in a file matching one of the patterns below.
+*.secret.tfvars
+*.local.tfvars
+*.auto.tfvars
+
+# --- Credentials: never in git ------------------------------------------------
+clouds.yaml
+secure.yaml
+backend.local.hcl
+*.pem
+*.key
+.env
+
+# --- OS noise ----------------------------------------------------------------
+.DS_Store

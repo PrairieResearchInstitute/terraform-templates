@@ -1,0 +1,60 @@
+# .github/actions/terraform-setup/action.yml
+#
+# A COMPOSITE ACTION: a reusable bundle of steps. plan.yml, apply.yml and destroy.yml
+# all need the same four things before they can run Terraform in a folder:
+#   1. install Terraform           2. write the OpenStack credentials file
+#   3. connect to the remote state 4. terraform init
+# Writing them once here means a fix (say, a new Terraform version) is ONE edit.
+#
+# Secrets cannot be read directly inside a composite action, so the calling job
+# passes them as inputs. The calling job must ALSO export, in its job-level `env:`,
+# AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_ENDPOINT_URL: the later
+# `terraform plan/apply` steps need them too, and job-level env reaches every step.
+name: Set up Terraform (OpenStack + S3 state)
+description: Installs Terraform, writes clouds.yaml and runs terraform init in one folder.
+
+inputs:
+  directory:
+    description: Terraform root to initialise (network, storage, vm-a, ...).
+    required: true
+  clouds-yaml:
+    description: Full contents of a clouds.yaml holding the CI application credential.
+    required: true
+  bucket-name:
+    description: Name of the S3 bucket that stores the state.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        # Pin an exact version so every run (and every developer) behaves the same.
+        # Upgrade deliberately, in its own pull request.
+        terraform_version: "1.15.6"
+        # The wrapper script this action adds by default rewrites Terraform's output
+        # and exit handling; we want plain `terraform` so `tee` and exit codes behave.
+        terraform_wrapper: false
+
+    - name: Write clouds.yaml (the CI application credential)
+      shell: bash
+      env:
+        # Pass the secret through an environment variable and print it with printf.
+        # Pasting ${{ secrets.X }} straight into the script would let special
+        # characters in the secret change the script itself.
+        CLOUDS_YAML: ${{ inputs.clouds-yaml }}
+      run: |
+        install -d -m 700 "$HOME/.config/openstack"
+        printf '%s\n' "$CLOUDS_YAML" > "$HOME/.config/openstack/clouds.yaml"
+        chmod 600 "$HOME/.config/openstack/clouds.yaml"
+
+    - name: Terraform init
+      shell: bash
+      working-directory: ${{ inputs.directory }}
+      env:
+        BUCKET_NAME: ${{ inputs.bucket-name }}
+      # -backend-config=FILE      shared, non-secret settings (committed)
+      # -backend-config="k=v"     the one value we keep secret: the bucket name
+      # AWS_ENDPOINT_URL and the access keys come from the job's environment.
+      run: terraform init -input=false -backend-config=../backend.hcl -backend-config="bucket=${BUCKET_NAME}"

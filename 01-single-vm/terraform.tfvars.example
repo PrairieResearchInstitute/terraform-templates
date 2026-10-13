@@ -1,0 +1,32 @@
+# terraform.tfvars.example -- copy to terraform.tfvars and fill in YOUR values.
+#   cp terraform.tfvars.example terraform.tfvars
+# terraform.tfvars is gitignored. Terraform loads it automatically.
+#
+# Every "find it with" command below is the OpenStack CLI (see the root README
+# for installation). Run it with OS_CLOUD set to your clouds.yaml entry:
+#   export OS_CLOUD=my-cloud
+
+# Entry name inside clouds.yaml.
+os_cloud = "my-cloud"
+
+# Name of the VM (also names its port: "<name>-port").
+instance_name = "my-first-vm"
+
+# Find with: openstack image list
+image_name = "Ubuntu 24.04"
+
+# Find with: openstack flavor list     (example from Radiant: gp.xlarge)
+flavor_name = "<flavor-name>"
+
+# Find with: openstack keypair list    (create one: see README)
+key_pair = "<your-keypair-name>"
+
+# Find with: openstack network list
+network_name = "<your-project-network>"
+
+# Find with: openstack network list --external
+external_network_name = "ext-net"
+
+# Find with: openstack security group list
+# You need one that allows SSH (TCP 22), otherwise you cannot log in.
+security_groups = ["default", "<your-ssh-security-group>"]

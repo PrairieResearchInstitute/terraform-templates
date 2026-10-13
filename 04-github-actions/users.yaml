@@ -1,0 +1,45 @@
+# users.yaml -- who gets an account on every VM. COMMITTED: edit it by pull request.
+# (Public keys are not secret, but they do identify real people; in a public repository
+# keep only placeholders or consenting contributors.)
+#
+# One shared list, applied to EVERY VM at first boot by cloud-init.
+# Only PUBLIC keys go here -- never a private key.
+#
+# Fields:
+#   name                  login name (lowercase letters, digits, - and _)
+#   uid                   FIXED numeric user id. Pick one per person and never reuse it.
+#                         If you use institutional shared storage (NFS), use the id
+#                         that storage already knows for that person: `id <netid>` on
+#                         a machine where they have an account.
+#   primary_group         { name, gid }   the user's main group
+#   groups                extra groups, each { name, gid }  (e.g. one per shared folder)
+#   sudo                  true => passwordless sudo (default: false)
+#   ssh_authorized_keys   public keys allowed to log in as this user
+#
+# Why numbers matter: files on a persistent disk or NFS share are owned by
+# uid/gid NUMBERS. Fixed ids keep ownership correct across VM rebuilds.
+
+users:
+  - name: alice
+    uid: 10001
+    primary_group:
+      name: team
+      gid: 10000
+    groups:
+      - name: project-a
+        gid: 10100
+    sudo: true
+    ssh_authorized_keys:
+      - "ssh-ed25519 AAAA...replace-with-alices-real-public-key... alice@example.org"
+
+  - name: bob
+    uid: 10002
+    primary_group:
+      name: team
+      gid: 10000
+    groups:
+      - name: project-a
+        gid: 10100
+    sudo: false
+    ssh_authorized_keys:
+      - "ssh-ed25519 AAAA...replace-with-bobs-real-public-key... bob@example.org"

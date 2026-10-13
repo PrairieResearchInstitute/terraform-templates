@@ -1,0 +1,11 @@
+# storage/terraform.tfvars.example -- copy to terraform.tfvars (gitignored).
+
+os_cloud = "my-cloud"
+
+# VM name => size in GB. Keys MUST match the other folders' instance names.
+# Check your project quota first:  openstack quota show   (look at gigabytes)
+volumes = {
+  "vm-a" = 20
+  "vm-b" = 20
+  "vm-c" = 20
+}

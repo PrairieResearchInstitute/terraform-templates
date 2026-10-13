@@ -1,0 +1,98 @@
+# .github/workflows/apply.yml -- runs when a pull request is MERGED into main.
+#
+# This is the only place infrastructure changes in normal operation: a merged,
+# reviewed pull request is applied automatically, one folder at a time.
+name: Terraform Apply
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'network/**'
+      - 'storage/**'
+      - 'vm-*/**'
+      - 'modules/**'
+      - 'users.yaml'
+      - 'backend.hcl'
+
+permissions:
+  contents: read
+
+# If two merges happen close together, run the second AFTER the first instead of
+# cancelling it: cancelling an apply half-way would be far worse than waiting.
+concurrency:
+  group: terraform-apply
+  cancel-in-progress: false
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      dirs: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          # Identical to plan.yml. The order is the APPLY ORDER: a VM looks up the
+          # port and volume that network/ and storage/ create, so those go first.
+          filters: |
+            network:
+              - 'network/**'
+              - 'modules/network-identity/**'
+              - 'backend.hcl'
+            storage:
+              - 'storage/**'
+              - 'backend.hcl'
+            vm-a:
+              - 'vm-a/**'
+              - 'modules/vm/**'
+              - 'users.yaml'
+              - 'backend.hcl'
+            vm-b:
+              - 'vm-b/**'
+              - 'modules/vm/**'
+              - 'users.yaml'
+              - 'backend.hcl'
+            vm-c:
+              - 'vm-c/**'
+              - 'modules/vm/**'
+              - 'users.yaml'
+              - 'backend.hcl'
+
+  apply:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.dirs != '[]'
+    runs-on: ubuntu-latest
+    # OPTIONAL second gate: create a GitHub "Environment" named `production` with
+    # required reviewers (Settings > Environments), then uncomment the next line.
+    # Every apply job will then wait for a human click.
+    # environment: production
+    strategy:
+      # One folder at a time, in the order above. With the default (parallel) a VM
+      # could start before the network it needs has been created.
+      max-parallel: 1
+      # Stop at the first failure: if network/ fails, applying the VMs that depend on
+      # it would only produce confusing errors.
+      fail-fast: true
+      matrix:
+        dir: ${{ fromJSON(needs.detect-changes.outputs.dirs) }}
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ENDPOINT_URL: ${{ secrets.AWS_ENDPOINT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: ./.github/actions/terraform-setup
+        with:
+          directory: ${{ matrix.dir }}
+          clouds-yaml: ${{ secrets.OS_CLOUDS_YAML }}
+          bucket-name: ${{ secrets.BUCKET_NAME }}
+
+      # -auto-approve is acceptable HERE because the change was already reviewed as a
+      # plan in the pull request. (Applying a saved plan file is stricter: see the README.)
+      - name: Terraform apply
+        working-directory: ${{ matrix.dir }}
+        run: terraform apply -auto-approve -input=false
